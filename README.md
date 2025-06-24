@@ -109,12 +109,3 @@ raop-pizza/
 }
 ```
 Where `score` is the probability of success (0-1) and `label` is the binary prediction (1 = success, 0 = failure).
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- Dataset based on the RAOP dataset from the Stanford Network Analysis Project
-- Uses the all-MiniLM-L6-v2 model from Sentence Transformers
