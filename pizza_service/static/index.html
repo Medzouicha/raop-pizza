@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAOP Pizza Predictor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #d63031;
+            text-align: center;
+        }
+        form {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        button {
+            background-color: #d63031;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #b71c1c;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .failure {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .progress-container {
+            width: 100%;
+            background-color: #f3f3f3;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .progress-bar {
+            height: 20px;
+            border-radius: 4px;
+            background-color: #4caf50;
+            text-align: center;
+            line-height: 20px;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Reddit Pizza Request Success Predictor</h1>
+
+    <form id="predictionForm">
+        <label for="requestTitle">Request Title:</label>
+        <input type="text" id="requestTitle" name="requestTitle" required
+               placeholder="E.g., Broke student craving pizza">
+
+        <label for="requestText">Request Text:</label>
+        <textarea id="requestText" name="requestText" required
+                  placeholder="E.g., Hey kind folks, finals drained my wallet. Could anyone spare a pizza tonight? Thank you!"></textarea>
+
+        <label for="accountAge">Reddit Account Age (days):</label>
+        <input type="number" id="accountAge" name="accountAge" min="0" value="200">
+
+        <button type="submit">Predict Success</button>
+    </form>
+
+    <div id="result">
+        <h3>Prediction Result:</h3>
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar">50%</div>
+        </div>
+        <p id="resultText"></p>
+    </div>
+
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const title = document.getElementById('requestTitle').value;
+            const text = document.getElementById('requestText').value;
+            const accountAge = parseInt(document.getElementById('accountAge').value);
+            const currentTime = new Date().toISOString();
+
+            const payload = {
+                request_title: title,
+                request_text_edit_aware: text,
+                request_time_utc: currentTime,
+                requester_account_age_in_days_at_request: accountAge
+            };            try {
+                // Make the API call
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                const resultDiv = document.getElementById('result');
+                const progressBar = document.getElementById('progressBar');
+                const resultText = document.getElementById('resultText');                // Show result div
+                resultDiv.style.display = 'block';
+
+                // Update progress bar with error handling
+                let scorePercentage = 0;
+                if (data && typeof data.score === 'number' && !isNaN(data.score)) {
+                    scorePercentage = (data.score * 100).toFixed(1);
+                } else {
+                    scorePercentage = "0.0";
+                }
+
+                progressBar.style.width = `${scorePercentage}%`;
+                progressBar.textContent = `${scorePercentage}%`;
+
+                // Set color based on prediction
+                if (data && data.label === 1) {
+                    resultDiv.className = 'success';
+                    resultText.innerHTML = `<strong>Success Likely!</strong> The model predicts your request has a ${scorePercentage}% chance of receiving a pizza.`;
+                } else {
+                    resultDiv.className = 'failure';
+                    resultText.innerHTML = `<strong>Success Unlikely.</strong> The model predicts your request has only a ${scorePercentage}% chance of receiving a pizza.`;
+                }
+                  } catch (error) {
+                document.getElementById('result').style.display = 'block';
+                document.getElementById('result').className = 'failure';
+                document.getElementById('resultText').textContent = 'Error: Could not get prediction. Please try again later.';
+            }
+        });
+    </script>
+</body>
+</html>
